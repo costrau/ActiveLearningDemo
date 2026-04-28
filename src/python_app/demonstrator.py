@@ -17,6 +17,7 @@ from st_click_detector import click_detector
 # utility functions
 # -----------------------------
 
+
 @st.cache_data
 def img_to_datauri(path: str) -> str:
     b = Path(path).read_bytes()
@@ -69,11 +70,11 @@ def make_html(cars, selected):
         html += f"""
         <div class="card {selected_cls}">
             <b>{c["name"]}</b>
-            <div>{c['gewicht']} kg</div>
-            <a href="#" id="auto_{c['id']}">
+            <div>{c["gewicht"]} kg</div>
+            <a href="#" id="auto_{c["id"]}">
                 <img src="{datauri}">
             </a>
-            <div><b>{c['geschwindigkeit']} km/h</b></div>
+            <div><b>{c["geschwindigkeit"]} km/h</b></div>
         </div>
         """
     html += "</div>"
@@ -82,7 +83,8 @@ def make_html(cars, selected):
 
 @st.cache_data
 def make_html_single_car(car, datauri, selected=False):
-    html = """
+    html = (
+        """
         <style>
             .container {
                 display: grid;
@@ -118,18 +120,20 @@ def make_html_single_car(car, datauri, selected=False):
                 box-shadow: 0 0 8px rgba(0,128,0,0.25); 
             }
         </style>
-    """ + f"""
+    """
+        + f"""
         <div class="container">
             <div class="card {"selected" if selected else ""}">
                 <b>{car["name"]}</b>
-                <div>{car['gewicht']} kg</div>
-                <a href="#" id="auto_{car['id']}">
+                <div>{car["gewicht"]} kg</div>
+                <a href="#" id="auto_{car["id"]}">
                     <img src="{datauri}">
                 </a>
-                <div><b>{car['geschwindigkeit']} km/h</b></div>
+                <div><b>{car["geschwindigkeit"]} km/h</b></div>
             </div>
         </div>
     """
+    )
     return html
 
 
@@ -139,7 +143,7 @@ def get_gif(car_id):
     car = cars[car_id]
     car_type = car["name"]
     velocity = car["geschwindigkeit"]
-    path = f"gifs/{car['path'].split('/')[-1][:-4]}_{velocity}.gif"
+    path = Path.cwd().joinpath(f"gifs/{car['path'].split('/')[-1][:-4]}_{velocity}.gif")
     return car_type, velocity, path
 
 
@@ -152,7 +156,7 @@ def braking_distance(v_kmh, m, brake_force=5000):
     # compute brake-acceleration
     a = brake_force / m
     # compute the distance
-    s = v ** 2 / (2 * a)
+    s = v**2 / (2 * a)
     return s
 
 
@@ -165,8 +169,14 @@ def create_cars():
     weight = 1000
     for i in [20, 50, 60, 100]:
         cars.append(
-            {"id": id_counter, "path": path, "name": "Kleinwagen", "gewicht": weight, "geschwindigkeit": i,
-             "label": braking_distance(v_kmh=i, m=weight)}
+            {
+                "id": id_counter,
+                "path": path,
+                "name": "Kleinwagen",
+                "gewicht": weight,
+                "geschwindigkeit": i,
+                "label": braking_distance(v_kmh=i, m=weight),
+            }
         )
         id_counter += 1
     # add "bullis"
@@ -174,8 +184,14 @@ def create_cars():
     weight = 2300
     for i in [30, 40, 70, 90]:
         cars.append(
-            {"id": id_counter, "path": path, "name": "Bulli", "gewicht": weight, "geschwindigkeit": i,
-             "label": braking_distance(v_kmh=i, m=weight)}
+            {
+                "id": id_counter,
+                "path": path,
+                "name": "Bulli",
+                "gewicht": weight,
+                "geschwindigkeit": i,
+                "label": braking_distance(v_kmh=i, m=weight),
+            }
         )
         id_counter += 1
     # add pickups
@@ -183,8 +199,14 @@ def create_cars():
     weight = 2000
     for i in [10, 30, 50, 100]:
         cars.append(
-            {"id": id_counter, "path": path, "name": "Pickup", "gewicht": weight, "geschwindigkeit": i,
-             "label": braking_distance(v_kmh=i, m=weight)}
+            {
+                "id": id_counter,
+                "path": path,
+                "name": "Pickup",
+                "gewicht": weight,
+                "geschwindigkeit": i,
+                "label": braking_distance(v_kmh=i, m=weight),
+            }
         )
         id_counter += 1
     # add lkws
@@ -192,8 +214,14 @@ def create_cars():
     weight = 3000
     for i in [20, 30, 60, 100]:
         cars.append(
-            {"id": id_counter, "path": path, "name": "Transporter", "gewicht": weight, "geschwindigkeit": i,
-             "label": braking_distance(v_kmh=i, m=weight)}
+            {
+                "id": id_counter,
+                "path": path,
+                "name": "Transporter",
+                "gewicht": weight,
+                "geschwindigkeit": i,
+                "label": braking_distance(v_kmh=i, m=weight),
+            }
         )
         id_counter += 1
     # add sports cars
@@ -201,8 +229,14 @@ def create_cars():
     weight = 1500
     for i in [30, 60, 70, 100]:
         cars.append(
-            {"id": id_counter, "path": path, "name": "Sportwagen", "gewicht": weight, "geschwindigkeit": i,
-             "label": braking_distance(v_kmh=i, m=weight)}
+            {
+                "id": id_counter,
+                "path": path,
+                "name": "Sportwagen",
+                "gewicht": weight,
+                "geschwindigkeit": i,
+                "label": braking_distance(v_kmh=i, m=weight),
+            }
         )
         id_counter += 1
     return cars
@@ -234,7 +268,9 @@ def train_model_and_predict_grid(X_train, y_train, VM, y_true, linear_model=Fals
         model = Ridge()
     else:
         # model = GaussianProcessRegressor(normalize_y=True, kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)))
-        model = GaussianProcessRegressor(normalize_y=True, kernel=1.0 * DotProduct(sigma_0=1.0) ** 2)
+        model = GaussianProcessRegressor(
+            normalize_y=True, kernel=1.0 * DotProduct(sigma_0=1.0) ** 2
+        )
     # train model
     model.fit(X_train, y_train)
 
@@ -252,120 +288,146 @@ def plot_user_figure(V, M, S, X_train, scores):
     fig = go.Figure()
 
     # make a grid of invisible points for selection
-    fig.add_trace(go.Scatter(
-        x=V.ravel(),
-        y=M.ravel(),
-        mode="markers",
-        marker=dict(size=12, color="rgba(0,0,0,0)"),
-        name="Klickpunkte",
-        showlegend=False,
-        hoverinfo="none",
-        zorder=20,
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=V.ravel(),
+            y=M.ravel(),
+            mode="markers",
+            marker=dict(size=12, color="rgba(0,0,0,0)"),
+            name="Klickpunkte",
+            showlegend=False,
+            hoverinfo="none",
+            zorder=20,
+        )
+    )
     # Kontur der Modellvorhersage
-    fig.add_trace(go.Contour(
-        z=S,
-        x=V[0],
-        y=M[:, 0],
-        colorscale="jet",
-        contours=dict(
-            start=0,
-            end=271,
-            size=8,
-            # coloring='heatmap',
-            showlines=False,
-        ),
-        colorbar=dict(
-            title=dict(
-                text='Bremsweg',  # title here
-                side='right',
-                font=dict(
-                    size=20,
-                    family='Arial, sans-serif')
+    fig.add_trace(
+        go.Contour(
+            z=S,
+            x=V[0],
+            y=M[:, 0],
+            colorscale="jet",
+            contours=dict(
+                start=0,
+                end=271,
+                size=8,
+                # coloring='heatmap',
+                showlines=False,
             ),
-            nticks=10,
-            ticks='outside',
-            ticklen=5,
-            tickwidth=1,
-            tickfont=dict(
-                size=16,
+            colorbar=dict(
+                title=dict(
+                    text="Bremsweg",  # title here
+                    side="right",
+                    font=dict(size=20, family="Arial, sans-serif"),
+                ),
+                nticks=10,
+                ticks="outside",
+                ticklen=5,
+                tickwidth=1,
+                tickfont=dict(
+                    size=16,
+                ),
+                showticklabels=True,
             ),
-            showticklabels=True,
-        ),
-        showscale=True,
-        zorder=0,
-    ))
+            showscale=True,
+            zorder=0,
+        )
+    )
 
     # show selected points (training points)
     # First 5
-    fig.add_trace(go.Scatter(
-        x=X_train[:5, 0],
-        y=X_train[:5, 1],
-        mode="markers + text",
-        marker=dict(color="red", line=dict(width=2, color='white'), size=12, symbol="x"),
-        text=[f"Auto {idx + 1}<br>{score:.0f}/10" for idx, score in enumerate(scores)],
-        textposition=compute_text_position(X_train),
-        textfont=dict(
-            family="Arial Black",  # Schriftart
-            size=14,  # Schriftgröße
-            color="white",  # Textfarbe
-            shadow="#000000 0px 0px 3px"
-        ),
-        opacity=0.8,
-        name="Trainingspunkte",
-        showlegend=False,
-        # hoverinfo="skip",
-        selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-        unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-        zorder=1,
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=X_train[:5, 0],
+            y=X_train[:5, 1],
+            mode="markers + text",
+            marker=dict(
+                color="red", line=dict(width=2, color="white"), size=12, symbol="x"
+            ),
+            text=[
+                f"Auto {idx + 1}<br>{score:.0f}/10" for idx, score in enumerate(scores)
+            ],
+            textposition=compute_text_position(X_train),
+            textfont=dict(
+                family="Arial Black",  # Schriftart
+                size=14,  # Schriftgröße
+                color="white",  # Textfarbe
+                shadow="#000000 0px 0px 3px",
+            ),
+            opacity=0.8,
+            name="Trainingspunkte",
+            showlegend=False,
+            # hoverinfo="skip",
+            selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+            unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+            zorder=1,
+        )
+    )
 
     # next points get different layout
     # plot the selection of the first and second car_id
     if len(X_train) > 5:
-        fig.add_trace(go.Scatter(
-            x=X_train[5:, 0],
-            y=X_train[5:, 1],
-            mode="markers",
-            marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="x"),
-            name="Ausgewählter Punkt",
-            showlegend=False,
-            hoverinfo="skip",
-            selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-            unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-            zorder=2,
-        ))
-
-    try:
-        if st.session_state.additional_car_selection >= 1:
-            fig_user_model.add_trace(go.Scatter(
-                x=[st.session_state.first_car["geschwindigkeit"]],
-                y=[st.session_state.first_car["gewicht"]],
+        fig.add_trace(
+            go.Scatter(
+                x=X_train[5:, 0],
+                y=X_train[5:, 1],
                 mode="markers",
-                marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="x"),
+                marker=dict(
+                    color="gray", line=dict(width=3, color="white"), size=20, symbol="x"
+                ),
                 name="Ausgewählter Punkt",
                 showlegend=False,
                 hoverinfo="skip",
                 selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
                 unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
                 zorder=2,
-            ))
+            )
+        )
+
+    try:
+        if st.session_state.additional_car_selection >= 1:
+            fig_user_model.add_trace(
+                go.Scatter(
+                    x=[st.session_state.first_car["geschwindigkeit"]],
+                    y=[st.session_state.first_car["gewicht"]],
+                    mode="markers",
+                    marker=dict(
+                        color="gray",
+                        line=dict(width=3, color="white"),
+                        size=20,
+                        symbol="x",
+                    ),
+                    name="Ausgewählter Punkt",
+                    showlegend=False,
+                    hoverinfo="skip",
+                    selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+                    unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+                    zorder=2,
+                )
+            )
     except:
         pass
     try:
         if st.session_state.additional_car_selection == 2:
-            fig_user_model.add_trace(go.Scatter(
-                x=[st.session_state.second_car["geschwindigkeit"]],
-                y=[st.session_state.second_car["gewicht"]],
-                mode="markers",
-                marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="x"),
-                name="Ausgewählter Punkt",
-                showlegend=False,
-                hoverinfo="skip",
-                selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-                unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-                zorder=2,
-            ))
+            fig_user_model.add_trace(
+                go.Scatter(
+                    x=[st.session_state.second_car["geschwindigkeit"]],
+                    y=[st.session_state.second_car["gewicht"]],
+                    mode="markers",
+                    marker=dict(
+                        color="gray",
+                        line=dict(width=3, color="white"),
+                        size=20,
+                        symbol="x",
+                    ),
+                    name="Ausgewählter Punkt",
+                    showlegend=False,
+                    hoverinfo="skip",
+                    selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+                    unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+                    zorder=2,
+                )
+            )
     except:
         pass
 
@@ -380,70 +442,77 @@ def plot_ground_truth(V, M, S, X_train):
     fig = go.Figure()
 
     # Kontur der Modellvorhersage
-    fig.add_trace(go.Contour(
-        z=S,
-        x=V[0],
-        y=M[:, 0],
-        colorscale="jet",
-        contours=dict(
-            start=0,
-            end=270,
-            size=8,
-            # coloring='heatmap',
-            showlines=False,
-        ),
-        colorbar=dict(
-            title=dict(
-                text='Bremsweg',  # title here
-                side='right',
-                font=dict(
-                    size=20,
-                    family='Arial, sans-serif')
+    fig.add_trace(
+        go.Contour(
+            z=S,
+            x=V[0],
+            y=M[:, 0],
+            colorscale="jet",
+            contours=dict(
+                start=0,
+                end=270,
+                size=8,
+                # coloring='heatmap',
+                showlines=False,
             ),
-            nticks=10,
-            ticks='outside',
-            ticklen=5,
-            tickwidth=1,
-            tickfont=dict(
-                size=16,
+            colorbar=dict(
+                title=dict(
+                    text="Bremsweg",  # title here
+                    side="right",
+                    font=dict(size=20, family="Arial, sans-serif"),
+                ),
+                nticks=10,
+                ticks="outside",
+                ticklen=5,
+                tickwidth=1,
+                tickfont=dict(
+                    size=16,
+                ),
+                showticklabels=True,
             ),
-            showticklabels=True,
-        ),
-        showscale=True,
-        zorder=0,
-        hoverinfo="none",
-    ))
+            showscale=True,
+            zorder=0,
+            hoverinfo="none",
+        )
+    )
 
     # show selected points (training points)
-    fig.add_trace(go.Scatter(
-        x=X_train[:, 0],
-        y=X_train[:, 1],
-        mode="markers + text",
-        marker=dict(color="red", line=dict(width=2, color='white'), size=12, symbol="x"),
-
-        name="Trainingspunkte",
-        showlegend=False,
-        hoverinfo="none",
-        selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-        unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-        zorder=1,
-    ))
-
-    # next points get different layout
-    # plot the selection of the first and second car_id
-    if len(X_train) > 5:
-        fig.add_trace(go.Scatter(
-            x=X_train[5:, 0],
-            y=X_train[5:, 1],
-            mode="markers",
-            marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="x"),
-            name="Ausgewählter Punkt",
+    fig.add_trace(
+        go.Scatter(
+            x=X_train[:, 0],
+            y=X_train[:, 1],
+            mode="markers + text",
+            marker=dict(
+                color="red", line=dict(width=2, color="white"), size=12, symbol="x"
+            ),
+            name="Trainingspunkte",
             showlegend=False,
             hoverinfo="none",
             selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
             unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-            zorder=2,
-        ))
+            zorder=1,
+        )
+    )
+
+    # next points get different layout
+    # plot the selection of the first and second car_id
+    if len(X_train) > 5:
+        fig.add_trace(
+            go.Scatter(
+                x=X_train[5:, 0],
+                y=X_train[5:, 1],
+                mode="markers",
+                marker=dict(
+                    color="gray", line=dict(width=3, color="white"), size=20, symbol="x"
+                ),
+                name="Ausgewählter Punkt",
+                showlegend=False,
+                hoverinfo="none",
+                selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+                unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+                zorder=2,
+            )
+        )
 
     # layout stuff
     fig = fig_layout(fig)
@@ -456,65 +525,72 @@ def plot_uncertainty(V, M, unc, X_train, selected=None):
     fig = go.Figure()
 
     # Kontur der Modellvorhersage
-    fig.add_trace(go.Contour(
-        z=unc,
-        x=V[0],
-        y=M[:, 0],
-        colorscale="greens",
-        contours=dict(
-            showlines=False,
-        ),
-        colorbar=dict(
-            title=dict(
-                text='Unsicherheit',  # title here
-                side='right',
-                font=dict(
-                    size=20,
-                    family='Arial, sans-serif')
+    fig.add_trace(
+        go.Contour(
+            z=unc,
+            x=V[0],
+            y=M[:, 0],
+            colorscale="greens",
+            contours=dict(
+                showlines=False,
             ),
-            nticks=10,
-            ticks='outside',
-            ticklen=5,
-            tickwidth=1,
-            tickfont=dict(
-                size=16,
+            colorbar=dict(
+                title=dict(
+                    text="Unsicherheit",  # title here
+                    side="right",
+                    font=dict(size=20, family="Arial, sans-serif"),
+                ),
+                nticks=10,
+                ticks="outside",
+                ticklen=5,
+                tickwidth=1,
+                tickfont=dict(
+                    size=16,
+                ),
+                showticklabels=True,
             ),
-            showticklabels=True,
-        ),
-        showscale=True,
-        zorder=0,
-        hoverinfo="none",
-    ))
+            showscale=True,
+            zorder=0,
+            hoverinfo="none",
+        )
+    )
 
     # show selected points (training points)
-    fig.add_trace(go.Scatter(
-        x=X_train[:, 0],
-        y=X_train[:, 1],
-        mode="markers + text",
-        marker=dict(color="red", line=dict(width=2, color='white'), size=12, symbol="x"),
-
-        name="Trainingspunkte",
-        showlegend=False,
-        hoverinfo="none",
-        selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-        unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-        zorder=3,
-    ))
-
-    if selected is not None:
-        # selected points get different layout
-        fig.add_trace(go.Scatter(
-            x=[selected[0]],
-            y=[selected[1]],
-            mode="markers",
-            marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="x"),
-            name="Ausgewählter Punkt",
+    fig.add_trace(
+        go.Scatter(
+            x=X_train[:, 0],
+            y=X_train[:, 1],
+            mode="markers + text",
+            marker=dict(
+                color="red", line=dict(width=2, color="white"), size=12, symbol="x"
+            ),
+            name="Trainingspunkte",
             showlegend=False,
             hoverinfo="none",
             selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
             unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-            zorder=2,
-        ))
+            zorder=3,
+        )
+    )
+
+    if selected is not None:
+        # selected points get different layout
+        fig.add_trace(
+            go.Scatter(
+                x=[selected[0]],
+                y=[selected[1]],
+                mode="markers",
+                marker=dict(
+                    color="gray", line=dict(width=3, color="white"), size=20, symbol="x"
+                ),
+                name="Ausgewählter Punkt",
+                showlegend=False,
+                hoverinfo="none",
+                selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+                unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+                zorder=2,
+            )
+        )
 
     # layout stuff
     fig = fig_layout(fig)
@@ -529,7 +605,7 @@ def fig_layout(fig):
         xaxis_title="Geschwindigkeit (km/h)",
         yaxis_title="Gewicht (kg)",
         height=450,
-        margin={'t': 0, 'l': 0, 'b': 0, 'r': 0}
+        margin={"t": 0, "l": 0, "b": 0, "r": 0},
     )
     fig.update_xaxes(
         range=[V.min(), V.max()],
@@ -559,7 +635,6 @@ def compute_text_position(X_train):
     # compute text positions based on the quadrant the point is in
     positions = []
     for xi, yi in X_train:
-
         if yi == 1000:
             first_part = "top"
             if xi == 20:
@@ -642,7 +717,10 @@ def active_learner(X_train, y_train, pool, n_queries=2):
     # query points
     for i in range(n_queries):
         # define model
-        model = GaussianProcessRegressor(normalize_y=True, kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)))
+        model = GaussianProcessRegressor(
+            normalize_y=True,
+            kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)),
+        )
         # train model
         model.fit(X_train, y_train)
         # predict std for unselected pool
@@ -653,7 +731,9 @@ def active_learner(X_train, y_train, pool, n_queries=2):
         # find max uncertainty
         query_idx = np.argmax(y_std)
         # add this index to the final return value
-        queried_points.append((unselected_pool[query_idx], unselected_pool_labels[query_idx]))
+        queried_points.append(
+            (unselected_pool[query_idx], unselected_pool_labels[query_idx])
+        )
         # add this index to training data
         X_train = np.append(X_train, [unselected_pool_scaled[query_idx]], axis=0)
         y_train = np.append(y_train, unselected_pool_labels[query_idx])
@@ -663,7 +743,9 @@ def active_learner(X_train, y_train, pool, n_queries=2):
         unselected_pool_labels = np.delete(unselected_pool_labels, query_idx)
 
     # add the uncertainty after the last query to the grids
-    model = GaussianProcessRegressor(normalize_y=True, kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)))
+    model = GaussianProcessRegressor(
+        normalize_y=True, kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2))
+    )
     model.fit(X_train, y_train)
     _, y_std_grid = model.predict(VM_transformed, return_std=True)
     uncertainty_grids.append(y_std_grid)
@@ -687,7 +769,11 @@ def compute_scores_for_cars(selected_cars, selected_cars_label, y_test, y_true):
 
     # compute the "after state" (the test user_rmse with all five points)
     _, after_rmse = train_model_and_predict_grid(
-        X_train=selected_cars, y_train=selected_cars_label, VM=y_test, y_true=y_true, linear_model=False
+        X_train=selected_cars,
+        y_train=selected_cars_label,
+        VM=y_test,
+        y_true=y_true,
+        linear_model=False,
     )
 
     # define the list of the scores that will be returned later
@@ -696,15 +782,22 @@ def compute_scores_for_cars(selected_cars, selected_cars_label, y_test, y_true):
     for idx, car in enumerate(selected_cars):
         # select the "before state" (all points except the current one)
         other_indices = [j for j, _ in enumerate(selected_cars) if j != idx]
-        X_before, y_before = selected_cars[other_indices], selected_cars_label[other_indices]
+        X_before, y_before = (
+            selected_cars[other_indices],
+            selected_cars_label[other_indices],
+        )
 
         # compute the user_rmse with these other data points
         _, before_rmse = train_model_and_predict_grid(
-            X_train=X_before, y_train=y_before, VM=y_test, y_true=y_true, linear_model=False
+            X_train=X_before,
+            y_train=y_before,
+            VM=y_test,
+            y_true=y_true,
+            linear_model=False,
         )
 
         # compute relative improvement
-        improvement = (before_rmse - after_rmse)
+        improvement = before_rmse - after_rmse
         scores.append(improvement)
 
     # normalize scores
@@ -731,14 +824,14 @@ def show_al_results():
 base = st.container()
 
 # Style the Tabs for greater font-size
-css = '''
+css = """
     <style>
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"]
         {
             font-size:1.1rem;
         }
     </style>
-'''
+"""
 st.markdown(css, unsafe_allow_html=True)
 
 # -----------------------------
@@ -791,7 +884,9 @@ if clicked and not st.session_state.lock_selected:
 # -----------------------------
 if not st.session_state.lock_selected:
     with base:
-        st.header("Wähle 5 Autos aus, um Versuche für ein Bremsweg-Modell durchzuführen!")
+        st.header(
+            "Wähle 5 Autos aus, um Versuche für ein Bremsweg-Modell durchzuführen!"
+        )
         content = make_html(cars, st.session_state.selected)
         click_detector(content, key="car_selector")
 
@@ -805,7 +900,7 @@ def click_confirmation():
 
 
 if len(st.session_state.selected) == 5 and not st.session_state.lock_selected:
-    base.button('Führe Versuche durch', on_click=click_confirmation)
+    base.button("Führe Versuche durch", on_click=click_confirmation)
 
 # -----------------------------
 # Show GIFs for experiments
@@ -846,7 +941,9 @@ if st.session_state.confirmed and st.session_state.show_plot:
     # scale data
     VM_transformed, X_train_transformed = scale_data(V, M, X_train)
     # train model and predict grid with model
-    y_pred, user_rmse = train_model_and_predict_grid(X_train_transformed, y_train, VM_transformed, S)
+    y_pred, user_rmse = train_model_and_predict_grid(
+        X_train_transformed, y_train, VM_transformed, S
+    )
     # mask all negative values with zero
     y_pred[y_pred < 0] = 0
 
@@ -859,7 +956,8 @@ if st.session_state.confirmed and st.session_state.show_plot:
         selected_cars=X_train_transformed[:5],
         selected_cars_label=y_train[:5],
         y_test=VM_transformed,
-        y_true=S)
+        y_true=S,
+    )
 
     # Plots
     fig_user_model = plot_user_figure(V, M, S=y_pred, X_train=X_train, scores=scores)
@@ -891,33 +989,47 @@ if st.session_state.confirmed and st.session_state.show_plot:
         nearest_car = cars[nearest_car_index]
         st.session_state.nearest_car = nearest_car
         datauri = img_to_datauri(nearest_car["path"])
-        fig_user_model.add_trace(go.Scatter(
-            x=[nearest_car["geschwindigkeit"]],
-            y=[nearest_car["gewicht"]],
-            mode="markers",
-            marker=dict(color="gray", line=dict(width=3, color='white'), size=20, symbol="circle"),
-            name="Ausgewählter Punkt",
-            showlegend=False,
-            hoverinfo="skip",
-            selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
-            unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
-            zorder=2,
-        ))
+        fig_user_model.add_trace(
+            go.Scatter(
+                x=[nearest_car["geschwindigkeit"]],
+                y=[nearest_car["gewicht"]],
+                mode="markers",
+                marker=dict(
+                    color="gray",
+                    line=dict(width=3, color="white"),
+                    size=20,
+                    symbol="circle",
+                ),
+                name="Ausgewählter Punkt",
+                showlegend=False,
+                hoverinfo="skip",
+                selected=dict(marker=dict(opacity=1)),  # bleibt voll sichtbar
+                unselected=dict(marker=dict(opacity=1)),  # kein Verblassen
+                zorder=2,
+            )
+        )
 
     # if the additional cars are selected and confirmed, deactivate the selection reload proces
     with base:
         if st.session_state.show_results:
             st.header("Ergebnis Übersicht")
             tab1, tab2 = st.tabs(["Trainiertes Modell", "Tatsächliches Ergebnis"])
-            tab1.plotly_chart(fig_user_model, key="fig_user_model", config={'displayModeBar': False})
-            tab2.plotly_chart(plot_ground_truth(V, M, S, X_train), key="ground_truth",
-                              config={'displayModeBar': False})
+            tab1.plotly_chart(
+                fig_user_model, key="fig_user_model", config={"displayModeBar": False}
+            )
+            tab2.plotly_chart(
+                plot_ground_truth(V, M, S, X_train),
+                key="ground_truth",
+                config={"displayModeBar": False},
+            )
             error_print_user, error_print_al = st.columns(2)
             error_print_user.markdown(f"##### Dein Modellfehler: {user_rmse:.2f}%")
         elif st.session_state.additional_car_selection == 2:
             # render plot
             st.header("Modellvorhersage Bremsweg")
-            st.plotly_chart(fig_user_model, key="fig_user_model", config={'displayModeBar': False})
+            st.plotly_chart(
+                fig_user_model, key="fig_user_model", config={"displayModeBar": False}
+            )
             st.markdown("#### Deine Auswahl:")
             placeholder = st.empty()
             with placeholder:
@@ -926,9 +1038,16 @@ if st.session_state.confirmed and st.session_state.show_plot:
         else:
             # render plot
             st.header("Modellvorhersage Bremsweg")
-            st.plotly_chart(fig_user_model, key="fig_user_model", on_select="rerun", config={'displayModeBar': False})
-            st.markdown("##### Klicke in den Plot, um ein neues Auto auszuwählen. "
-                        "Führe dann den Versuch mit einem Klick auf das Auto durch")
+            st.plotly_chart(
+                fig_user_model,
+                key="fig_user_model",
+                on_select="rerun",
+                config={"displayModeBar": False},
+            )
+            st.markdown(
+                "##### Klicke in den Plot, um ein neues Auto auszuwählen. "
+                "Führe dann den Versuch mit einem Klick auf das Auto durch"
+            )
             placeholder = st.empty()
             with placeholder:
                 col1, col2 = st.columns([0.22, 0.78])
@@ -937,11 +1056,17 @@ if st.session_state.confirmed and st.session_state.show_plot:
         # handle selection logic of the first and second additional car_id
         # additional_car_selection == 0 means no car_id is selected yet and we display just the nearest car_id
         if not st.session_state.show_results:
-            if selected_points is not None and st.session_state.additional_car_selection == 0:
+            if (
+                selected_points is not None
+                and st.session_state.additional_car_selection == 0
+            ):
                 nearest_car = st.session_state.nearest_car
                 datauri = img_to_datauri(nearest_car["path"])
                 with col1:
-                    click_detector(make_html_single_car(nearest_car, datauri), key="first_car_confirmation")
+                    click_detector(
+                        make_html_single_car(nearest_car, datauri),
+                        key="first_car_confirmation",
+                    )
             # additional_car_selection == 1 means the first car_id selection is confirmed
             if st.session_state.additional_car_selection >= 1:
                 if "first_car" not in st.session_state:
@@ -964,13 +1089,23 @@ if st.session_state.confirmed and st.session_state.show_plot:
                     first_car = st.session_state.first_car
                 datauri = img_to_datauri(first_car["path"])
                 with col1:
-                    click_detector(make_html_single_car(first_car, datauri, selected=True), key="abc")
+                    click_detector(
+                        make_html_single_car(first_car, datauri, selected=True),
+                        key="abc",
+                    )
             # additional_car_selection == 1, and another selection is present means we display the second-nearest car_id
-            if selected_points is not None and st.session_state.additional_car_selection == 1 and st.session_state.selection_changed:
+            if (
+                selected_points is not None
+                and st.session_state.additional_car_selection == 1
+                and st.session_state.selection_changed
+            ):
                 nearest_car = st.session_state.nearest_car
                 datauri = img_to_datauri(nearest_car["path"])
                 with col2:
-                    click_detector(make_html_single_car(nearest_car, datauri), key="second_car_confirmation")
+                    click_detector(
+                        make_html_single_car(nearest_car, datauri),
+                        key="second_car_confirmation",
+                    )
             # additional_car_selection == 2 means both cars are confirmed
             if st.session_state.additional_car_selection == 2:
                 if "second_car" not in st.session_state:
@@ -993,7 +1128,10 @@ if st.session_state.confirmed and st.session_state.show_plot:
                     second_car = st.session_state.second_car
                 datauri = img_to_datauri(second_car["path"])
                 with col2:
-                    click_detector(make_html_single_car(second_car, datauri, selected=True), key="bcd")
+                    click_detector(
+                        make_html_single_car(second_car, datauri, selected=True),
+                        key="bcd",
+                    )
         else:
             # -----------------------------
             # Active Learning stuff
@@ -1013,12 +1151,14 @@ if st.session_state.confirmed and st.session_state.show_plot:
                             "Modell Aktiver Lerner",
                             "Unsicherheit 1. Punkt",
                             "Unsicherheit 2. Punkt",
-                            "Unsicherheit danach"
+                            "Unsicherheit danach",
                         ]
                     )
 
                 # get the points that an uncertainty-based active learner would query
-                queried_points, uncertainty_grids = active_learner(X_train_transformed[:5], y_train[:5], pool=cars)
+                queried_points, uncertainty_grids = active_learner(
+                    X_train_transformed[:5], y_train[:5], pool=cars
+                )
                 # add queried points to a separate training set
                 X_train_al = np.append(X_train[:5], [queried_points[0][0]], axis=0)
                 y_train_al = np.append(y_train[:5], queried_points[0][1])
@@ -1028,35 +1168,58 @@ if st.session_state.confirmed and st.session_state.show_plot:
                 # scale data
                 _, X_train_al_transformed = scale_data(V, M, X_train_al)
                 # train model and predict grid with the model
-                y_pred_al, al_rmse = train_model_and_predict_grid(X_train_al_transformed, y_train_al, VM_transformed, S)
+                y_pred_al, al_rmse = train_model_and_predict_grid(
+                    X_train_al_transformed, y_train_al, VM_transformed, S
+                )
                 # mask all negative values with zero
                 y_pred_al[y_pred_al < 0] = 0
 
                 # plot al-model prediction
                 with base:
                     with al_tab1:
-                        st.plotly_chart(plot_ground_truth(V, M, S=y_pred_al, X_train=X_train_al), key="al_model",
-                                        config={'displayModeBar': False})
+                        st.plotly_chart(
+                            plot_ground_truth(V, M, S=y_pred_al, X_train=X_train_al),
+                            key="al_model",
+                            config={"displayModeBar": False},
+                        )
                     # plot uncertainties from first selection
                     with al_tab2:
                         st.plotly_chart(
-                            plot_uncertainty(V, M, unc=uncertainty_grids[0].reshape(M.shape), X_train=X_train_al[:5],
-                                             selected=X_train_al[5], ),
+                            plot_uncertainty(
+                                V,
+                                M,
+                                unc=uncertainty_grids[0].reshape(M.shape),
+                                X_train=X_train_al[:5],
+                                selected=X_train_al[5],
+                            ),
                             key="unc_1",
-                            config={'displayModeBar': False})
+                            config={"displayModeBar": False},
+                        )
                     # plot uncertainties from second selection
                     with al_tab3:
                         st.plotly_chart(
-                            plot_uncertainty(V, M, unc=uncertainty_grids[1].reshape(M.shape), X_train=X_train_al[:6],
-                                             selected=X_train_al[6], ),
+                            plot_uncertainty(
+                                V,
+                                M,
+                                unc=uncertainty_grids[1].reshape(M.shape),
+                                X_train=X_train_al[:6],
+                                selected=X_train_al[6],
+                            ),
                             key="unc_2",
-                            config={'displayModeBar': False})
+                            config={"displayModeBar": False},
+                        )
                     # plot uncertainties after the second selection
                     with al_tab4:
                         st.plotly_chart(
-                            plot_uncertainty(V, M, unc=uncertainty_grids[2].reshape(M.shape), X_train=X_train_al[:7], ),
+                            plot_uncertainty(
+                                V,
+                                M,
+                                unc=uncertainty_grids[2].reshape(M.shape),
+                                X_train=X_train_al[:7],
+                            ),
                             key="unc_3",
-                            config={'displayModeBar': False})
+                            config={"displayModeBar": False},
+                        )
 
                     error_print_al.markdown(
                         f"##### Modellfehler Aktiver Lerner: {al_rmse:.2f}%"
