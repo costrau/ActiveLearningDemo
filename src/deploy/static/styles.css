@@ -1,0 +1,278 @@
+/* Top-right KI-Akademie OWL logo */
+.kiowl-logo {
+    display: none;
+}
+
+/* KI-Akademie logo: sits in-flow at the top-right of the main header */
+.main-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.logo-float {
+    line-height: 0;
+    flex-shrink: 0;
+    margin-left: 18px;
+}
+
+.logo-float img {
+    max-height: 72px;
+    width: auto;
+    display: block;
+}
+
+/* Footer */
+.site-footer {
+    margin-top: 28px;
+    padding-top: 18px;
+    padding-bottom: calc(22px + var(--footer-funding-height));
+    text-align: center;
+    position: relative;
+    /* ensure the (absolutely positioned) funding logo stays fully below the top separator */
+    min-height: calc(8em + 0px);
+}
+
+/* Footer separator: from main column's left edge to its right edge (avoids 100vw to prevent horizontal scroll) */
+.site-footer::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -22px;
+    right: -22px;
+    border-top: 1px solid var(--line);
+    pointer-events: none;
+    z-index: 2;
+    /* ensure separator stays above any absolutely-positioned elements */
+}
+
+@media (max-width: 980px) {
+    .site-footer::before {
+        left: -22px;
+        right: -22px;
+    }
+
+    .site-footer .footer-funding {
+        right: 20px;
+    }
+}
+
+.site-footer .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.site-footer .footer-links a {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.site-footer .footer-links a:hover {
+    text-decoration: underline;
+}
+
+.site-footer .footer-copy {
+    margin-top: 10px;
+}
+
+.site-footer .footer-funding {
+    position: absolute;
+    bottom: -15px;
+    width: auto;
+    height: 9.5em;
+    /*max-width: 280px;*/
+    /* cap width so it scales responsively */
+    max-height: 170px;
+    object-fit: contain;
+    right: 20px;
+    z-index: 1;
+}
+
+@media (max-width: 1400px) {
+
+    /* At narrower widths place the funding image into the normal flow so it wraps below links/text */
+    .site-footer .footer-funding {
+        position: static;
+        display: block;
+        margin: 14px auto 0;
+        height: auto;
+        max-width: 60%;
+        max-height: 120px;
+    }
+}
+
+/* Main content */
+
+:root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --text: #0e1117;
+    --muted: #5f6368;
+    --line: #e6e8eb;
+
+    --infoBg: #eef4ff;
+    --infoBd: #c7dcff;
+    --okBg: #eaf7ee;
+    --okBd: #bfe5c8;
+    --warnBg: #fff6e5;
+    --warnBd: #ffd9a6;
+}
+
+.grn-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.5em 1.5em;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-right: 0.5em;
+    width: 16em;
+}
+
+.grn-btn:hover {
+    background-color: #388e3c;
+}
+
+.nv-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    /*margin-right: 0.5em;*/
+    width: 2em;
+    height: 2em;
+    font-size: 1em;
+    /*display: flex;*/
+    align-items: center;
+    justify-content: center;
+    line-height: 1em;
+    text-align: center;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.nv-btn:hover {
+    background-color: #388e3c;
+}
+
+.chs-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.5em 0.5em;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    width: 90px;
+}
+
+.chs-btn:hover {
+    background-color: #388e3c;
+}
+
+.centered {
+    /* horizontal */
+    /* vertical */
+    height: 100%;
+    /* or set a fixed height */
+    width: 100%;
+    /* optional, for full width */
+    text-align: center;
+    /* for multi-line text */
+}
+
+.red-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 0.5em 1.5em;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    width: 8em;
+}
+
+.red-btn:hover {
+    background-color: #b71c1c;
+}
+
+.container {
+    max-width: 90vw;
+    margin: 24px auto;
+    font-family: Arial, Helvetica, sans-serif
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(4, 105px);
+    gap: 10px;
+    margin-bottom: 6px
+}
+
+.card {
+    border: 2px solid #ddd;
+    padding: 2px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer
+}
+
+.card:hover {
+    border-color: #388e3c;
+    box-shadow: 0 0 6px rgba(0, 128, 0, 0.1)
+}
+
+.card.selected {
+    border-color: #4CAF50;
+    box-shadow: 0 0 6px rgba(0, 128, 0, 0.15)
+}
+
+.card img {
+    width: 80px;
+    height: auto;
+    display: block;
+    margin: 0 auto
+}
+
+.controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px
+}
+
+.gif-area {
+    min-height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+
+.al-area {
+    margin: 12px 0;
+    display: flex;
+    gap: 8px
+}
+
+.al-area .card {
+    width: 180px
+}
+
+.leaderboard-area {
+    margin: 12px 0
+}
+
+.form-control {
+    padding: 0.5em;
+    font-size: 1em;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 200px;
+    height: 2em;
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bremsweg Demonstrator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/plotly-3.5.1.min.js" defer></script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="main-header-top">
+      <h1 class="app-title">🧠 Active Learning Demo</h1>
+      <a id="topbar" class="logo-float" href="https://ki-akademieowl.de/" rel="noopener" aria-label="KI Akademie OWL">
+        <img src="images/logo.png" alt="KI Akademie OWL Logo" />
+      </a>
+    </div>
+  </header>
+  <div class="container">
+    <div id="intro">
+      <h1>Bremsweg Demonstrator</h1>
+      <p>Willkommen zum Bremsweg Demonstrator! In diesem Spiel trittst du gegen einen aktiven Lerner an, um die
+        Vorhersagegenauigkeit eines Modells zu verbessern. Das Ziel ist es, die Bremswege von Autos basierend auf ihren
+        Eigenschaften vorherzusagen. Da das Ausführen von Experimenten zum Bremsweg teuer ist, gilt es mit möglichst
+        wenig Experimenten die Vorhersagegenauigkeit zu maximieren. Bist du besser als der Algorithmus? </p>
+      <p>Wähle 5 Autos aus der Liste aus und klicke auf "Führe Versuche durch". Das Modell wird dann mit den
+        ausgewählten Autos trainiert. Viel Erfolg!</p>
+    </div>
+
+    <div id="cars" class="cards"></div>
+
+    <div id="controls" class="controls">
+      <button type="button" class="grn-btn" id="runBtn">Führe Versuche durch</button>
+      <div id="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <div id="gifView" style="display:none">
+      <h2>Führe Versuche durch...</h2>
+      <div id="gifArea" class="gif-area"></div>
+    </div>
+
+    <div id="intermediateResult" style="display:none">
+      <div style="flex:1;min-width:280px">
+        <h3>Trainiertes Modell</h3>
+        <p> Das folgende Diagramm zeigt den vorhergesagten Bremsweg in Abhängigkeit von Gewicht und Geschwindigkeit. Mit
+          roten Kreuzen sind die gemessenen Punkte markiert. Schaue, wo du meinst, dass das Modell schlecht vorhersagt
+          und Klicke in den Graphen. Unten wird dir dann entsprechend ein Vorschlag für das nächste Auto gegeben. Das
+          kannst du genau zwei mal machen. Versuche den Fehlerscore zu minimieren.</p>
+        <div id="plotIntermediateUser" style="width:100%;height:50vh;min-height:220px;"></div>
+        <br>
+        <span id="intermediateUserStepInfo"></span>
+        <span id="intermediateSelectInfo"></span>
+        <div id="intermediateAlArea"></div>
+        <br>
+        <button type="button" id="continueToResult" class="grn-btn" style="display:none">Weiter zum
+          Gesamtergebnis</button>
+      </div>
+    </div>
+
+    <div id="resultView" style="display:none">
+      <p> Im folgenden Abschnitt kannst du dein Ergebnis mit den echten Bremswegen vergleichen.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <h3>Trainiertes Modell</h3>
+          <div id="plotUser" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div id="userControls"><button type="button" id="userPrev" class="nv-btn">◀</button> <button type="button"
+              id="userNext" class="nv-btn">▶</button> <span id="userStepInfo"></span></div>
+          <div id="userError"></div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <h3>Tatsächliches Ergebnis</h3>
+          <div id="plotGround" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div id="groundError"></div>
+        </div>
+      </div>
+      <p>Der aktive Lerner hat ebenfalls versucht, die Bremswege vorherzusagen. Er hatte ebenfalls die Wahl für 2
+        zusätzliche Autos. Wie gut hat er sich geschlagen?</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px">
+          <h3>Aktiver Lerner</h3>
+          <div id="plotAL" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div id="alControls"><button id="alPrev" class="nv-btn">◀</button> <button id="alNext"
+              class="nv-btn">▶</button> <span id="alStepInfo"></span>
+          </div>
+          <div id="alError"></div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <h3>Modell-Unsicherheit</h3>
+          <div id="plotUncertainty" style="width:100%;height:28vh;min-height:180px;"></div>
+        </div>
+      </div>
+      <p> Der Aktive Lerner entscheidet anhand der Modell-Unsicherheit. Diese ist rechts dargestellt.</p>
+      <span id="Endsummary"></span>
+      <div id="leaderboardArea" class="leaderboard-area"></div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <nav class="footer-links" aria-label="Rechtliches">
+      <a href="https://ki-akademieowl.de/impressum/">Impressum</a>
+      <a href="https://ki-akademieowl.de/informationen-zum-datenschutz/">Datenschutz</a>
+      <a href="https://ki-akademieowl.de/cookie-policy-eu/">Cookie-Richtlinie</a>
+    </nav>
+    <div class="footer-copy muted">Copyright © 2026 KI-Akademie OWL | Alle Rechte vorbehalten</div>
+    <img class="footer-funding" src="images/gefoerdert_durch.png"
+      alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt" />
+  </footer>
+  <script>
+    // Runtime backend host configuration.
+    // Set `window.__BACKEND_HOST__` (e.g. in a server template or container entrypoint)
+    // to point the frontend to a specific backend, e.g. 'https://api.example.com'.
+    // Leave as empty string for same-origin (recommended when serving static and API together).
+    if (window.__BACKEND_HOST__ === undefined) {
+      window.__BACKEND_HOST__ = '';
+    }
+  </script>
+  <script src="app.js" defer></script>
+</body>
+
+</html>
