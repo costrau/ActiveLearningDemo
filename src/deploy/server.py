@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -386,17 +386,21 @@ class LeaderEntry(BaseModel):
 
 
 @app.get("/api/cars")
-def api_cars():
+def api_cars(request: Request):
     cars = create_cars()
-    # expose icon and gif URLs
+    # expose icon URLs resolved against the request root_path
     for c in cars:
         icon_name = c["path"].split("/")[-1]
-        c["icon_url"] = f"/icons/{icon_name}"
+        try:
+            c["icon_url"] = str(request.url_for("get_icon", icon_name=icon_name))
+        except Exception:
+            # fallback to absolute-root path
+            c["icon_url"] = f"/icons/{icon_name}"
     return JSONResponse(content={"cars": cars})
 
 
 @app.post("/api/compute")
-def api_compute(payload: Selection = Body(...)):
+def api_compute(request: Request, payload: Selection = Body(...)):
     cars = create_cars()
     selected_ids = payload.selected
     if not selected_ids:
@@ -420,13 +424,18 @@ def api_compute(payload: Selection = Body(...)):
     # compute scores (use transformed selected points)
     scores = compute_scores_for_cars(X_train_transformed, y_train, VM_transformed, S)
 
-    # compute gif urls for selected
+    # compute gif urls for selected (resolve against request root_path)
     gifs = []
     for sid in selected_idx:
         car = cars[sid]
         velocity = car["geschwindigkeit"]
         base = car["path"].split("/")[-1][:-4]
-        gifs.append(f"/gifs/{base}_{velocity}.gif")
+        try:
+            gifs.append(
+                str(request.url_for("get_gif", gif_name=f"{base}_{velocity}.gif"))
+            )
+        except Exception:
+            gifs.append(f"/gifs/{base}_{velocity}.gif")
 
     return JSONResponse(
         content={
@@ -521,7 +530,8 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
             car = cars[sid]
             velocity = car["geschwindigkeit"]
             base = car["path"].split("/")[-1][:-4]
-            gifs.append(f"/gifs/{base}_{velocity}.gif")
+            # store filename only in background results; resolution happens when serving results
+            gifs.append(f"{base}_{velocity}.gif")
 
         # prepare training points metadata (mark first 5 as initial, rest as additional)
         train_points = []
@@ -605,7 +615,7 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
 
 
 @app.post("/api/compute_start")
-def api_compute_start(payload: Selection = Body(...)):
+def api_compute_start(request: Request, payload: Selection = Body(...)):
     selected_ids = payload.selected
     if not selected_ids:
         raise HTTPException(status_code=400, detail="no selection")
@@ -617,14 +627,19 @@ def api_compute_start(payload: Selection = Body(...)):
     with RESULTS_LOCK:
         RESULTS[job_id] = {"ready": False, "_ts": time.time()}
 
-    # compute gifs quickly to return immediately
+    # compute gifs quickly to return immediately (resolve against request root_path)
     cars = create_cars()
     gifs = []
     for sid in selected_idx:
         car = cars[sid]
         velocity = car["geschwindigkeit"]
         base = car["path"].split("/")[-1][:-4]
-        gifs.append(f"/gifs/{base}_{velocity}.gif")
+        try:
+            gifs.append(
+                str(request.url_for("get_gif", gif_name=f"{base}_{velocity}.gif"))
+            )
+        except Exception:
+            gifs.append(f"/gifs/{base}_{velocity}.gif")
 
     # start background thread
     thread = threading.Thread(target=_compute_worker, args=(job_id, selected_idx))
@@ -635,13 +650,24 @@ def api_compute_start(payload: Selection = Body(...)):
 
 
 @app.get("/api/compute_result")
-def api_compute_result(job_id: str):
+def api_compute_result(request: Request, job_id: str):
     with RESULTS_LOCK:
         if job_id not in RESULTS:
             raise HTTPException(status_code=404, detail="job not found")
         res = RESULTS[job_id].copy()
     # hide internal timestamp
     res.pop("_ts", None)
+    # resolve gif filenames (background worker stores filenames only)
+    if "gifs" in res and isinstance(res["gifs"], list):
+        resolved = []
+        for g in res["gifs"]:
+            # g may be stored as filename or as a path; normalize
+            gif_name = g.split("/")[-1]
+            try:
+                resolved.append(str(request.url_for("get_gif", gif_name=gif_name)))
+            except Exception:
+                resolved.append(f"/gifs/{gif_name}")
+        res["gifs"] = resolved
     return JSONResponse(content=res)
 
 
@@ -652,7 +678,7 @@ class NearestPayload(BaseModel):
 
 
 @app.post("/api/nearest")
-def api_nearest(payload: NearestPayload = Body(...)):
+def api_nearest(request: Request, payload: NearestPayload = Body(...)):
     x = float(payload.x)
     y = float(payload.y)
     selected = payload.selected or []
@@ -670,7 +696,16 @@ def api_nearest(payload: NearestPayload = Body(...)):
     car = cars[nearest_idx]
     velocity = car["geschwindigkeit"]
     base = car["path"].split("/")[-1][:-4]
-    gif = f"/gifs/{base}_{velocity}.gif"
+    gif_name = f"{base}_{velocity}.gif"
+    try:
+        gif = str(request.url_for("get_gif", gif_name=gif_name))
+    except Exception:
+        gif = f"/gifs/{gif_name}"
+    icon_name = car["path"].split("/")[-1]
+    try:
+        icon_url = str(request.url_for("get_icon", icon_name=icon_name))
+    except Exception:
+        icon_url = f"/icons/{icon_name}"
     return JSONResponse(
         content={
             "car": {
@@ -678,7 +713,7 @@ def api_nearest(payload: NearestPayload = Body(...)):
                 "name": car["name"],
                 "gewicht": car["gewicht"],
                 "geschwindigkeit": car["geschwindigkeit"],
-                "icon_url": f"/icons/{car['path'].split('/')[-1]}",
+                "icon_url": icon_url,
             },
             "gif": gif,
         }
@@ -736,6 +771,13 @@ if not NO_STATIC:
         file = STATIC_DIR / "favicon.ico"
         if not file.exists():
             raise HTTPException(status_code=404, detail="favicon not found")
+        return FileResponse(str(file))
+
+    @app.get("/images/{image_name}")
+    def get_image(image_name: str):
+        file = STATIC_DIR / "images" / image_name
+        if not file.exists():
+            raise HTTPException(status_code=404, detail="image not found")
         return FileResponse(str(file))
 
 

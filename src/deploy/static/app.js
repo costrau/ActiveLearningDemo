@@ -5,7 +5,7 @@
 let BACKEND_HOST = (window.__BACKEND_HOST__ !== undefined) ? window.__BACKEND_HOST__ : '';
 
 const SELECT_REQUIRED = 5;
-const MAX_SELECTION = 7;
+const MAX_SELECTION = 5;
 
 const carsEl = document.getElementById('cars');
 const intro = document.getElementById('intro');
@@ -321,7 +321,7 @@ function showIntermediateResult(data) {
           btn.onclick = async () => {
             const idx2 = parseInt(btn.dataset.carIdx);
             const car2 = intermediateSuggested[idx2];
-            if (!selected.has(car2.id) && selected.size < MAX_SELECTION && retrainCount < 2) {
+            if (!selected.has(car2.id) && selected.size < MAX_SELECTION + 2 && retrainCount < 2) {
               retrainCount++;
               intermediateSelectInfo.textContent = `Auto ${retrainCount}/2 gewählt. Du kannst noch ${2 - retrainCount} Auto(s) wählen.`;
               selected.add(car2.id);
