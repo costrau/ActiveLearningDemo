@@ -23,6 +23,7 @@ const intermediateUserStepInfo = document.getElementById('intermediateUserStepIn
 const intermediateSelectInfo = document.getElementById('intermediateSelectInfo');
 const intermediateAlArea = document.getElementById('intermediateAlArea');
 const continueToResult = document.getElementById('continueToResult');
+const continueToAL = document.getElementById('continueToAL');
 const controls = document.getElementById('controls');
 
 let cars = [];
@@ -409,8 +410,21 @@ function showResult(data) {
     yaxis: { title: { text: 'Gewicht (kg)' } },
   }, { responsive: true });
   document.getElementById('groundError').textContent = '';
+  continueToAL.style.display = '';
+  continueToAL.onclick = () => {
+    showOnlyView(null);
+    plotUser.innerHTML = '';
+    document.getElementById('userStepInfo').textContent = '';
+    document.getElementById('plotGround').innerHTML = '';
+    document.getElementById('groundError').textContent = '';
+    showActiveLearnerResult(data);
+  };
+}
 
+function showActiveLearnerResult(data) {
   // plot active learner if available
+  resultView.style.display = 'none';
+  activeLearnerResult.style.display = 'block';
   const al_steps = data.al_steps || [];
   let al_step_idx = al_steps.length - 1;
   function renderAlStep(i) {
@@ -454,6 +468,7 @@ function showResult(data) {
   runBtn.disabled = false;
 
   // Compare numeric RMSE values (use numbers, not string comparisons)
+  const user_steps = data.user_steps || [];
   const userFinal = Number(user_steps[user_steps.length - 1].rmse);
   const alFinal = al_steps.length ? Number(al_steps[al_steps.length - 1].rmse) : Infinity;
   if (userFinal > alFinal) {
@@ -495,8 +510,6 @@ function renderLeaderboardForm(lastScore) {
     } catch (e) {
       console.error('Failed to submit leaderboard', e);
       statusEl.textContent = 'Fehler beim Eintragen in das Leaderboard.';
-    } finally {
-      submit.disabled = false;
     }
   };
 }

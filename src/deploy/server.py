@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from pathlib import Path
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, DotProduct
+from sklearn.gaussian_process.kernels import DotProduct
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error
@@ -173,21 +173,7 @@ def scale_data(V, M, X_train):
     scaler.fit(np.c_[V.ravel(), M.ravel()])
     VM_transformed = scaler.transform(np.c_[V.ravel(), M.ravel()])
     X_train_transformed = scaler.transform(X_train)
-    return VM_transformed, X_train_transformed, scaler
-
-
-def train_model_and_predict_grid(X_train, y_train, VM, y_true, linear_model=False):
-    if linear_model:
-        model = Ridge()
-    else:
-        model = GaussianProcessRegressor(
-            normalize_y=True, kernel=1.0 * DotProduct(sigma_0=1.0) ** 2
-        )
-    model.fit(X_train, y_train)
-    y_pred = model.predict(VM)
-    y_pred = y_pred.reshape(y_true.shape)
-    rmse = mean_absolute_error(y_true=y_true.flatten(), y_pred=y_pred.flatten())
-    return y_pred, rmse
+    return VM_transformed, X_train_transformed
 
 
 def train_model_with_uncertainty(
@@ -200,8 +186,7 @@ def train_model_with_uncertainty(
         y_std = np.zeros_like(y_pred)
     else:
         model = GaussianProcessRegressor(
-            normalize_y=True,
-            kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)),
+            normalize_y=True, kernel=1.0 * DotProduct(sigma_0=1.0) ** 2
         )
         model.fit(X_train, y_train)
         y_pred, y_std = model.predict(VM_transformed, return_std=True)
@@ -218,10 +203,10 @@ def compute_scores_for_cars(
     if len(selected_cars_trans) == 0:
         return []
     # after state
-    _, after_rmse = train_model_and_predict_grid(
-        X_train=selected_cars_trans,
-        y_train=selected_labels,
-        VM=VM_transformed,
+    _, _, after_rmse = train_model_with_uncertainty(
+        selected_cars_trans,
+        selected_labels,
+        VM_transformed,
         y_true=y_true,
     )
     scores = []
@@ -232,8 +217,8 @@ def compute_scores_for_cars(
         if len(X_before) == 0:
             before_rmse = after_rmse
         else:
-            _, before_rmse = train_model_and_predict_grid(
-                X_train=X_before, y_train=y_before, VM=VM_transformed, y_true=y_true
+            _, _, before_rmse = train_model_with_uncertainty(
+                X_before, y_before, VM_transformed, y_true=y_true
             )
         improvement = before_rmse - after_rmse
         scores.append(improvement)
@@ -253,6 +238,10 @@ def active_learner_query(selected_idx: List[int], n_queries: int = 2):
     X_train = X[selected_idx]
     y_train = y[selected_idx]
 
+    # scale data using grid scaler
+    V, M, _ = compute_test_data()
+    _, X_train_transformed = scale_data(V, M, X_train)
+
     # build unselected pool
     unselected = [c for c in cars if c["id"] not in selected_idx]
     if len(unselected) == 0:
@@ -261,17 +250,13 @@ def active_learner_query(selected_idx: List[int], n_queries: int = 2):
         [[c["geschwindigkeit"], c["gewicht"]] for c in unselected]
     )
     unselected_labels = np.array([c["label"] for c in unselected])
-
-    # scale data using grid scaler
-    V, M, _ = compute_test_data()
-    VM_transformed, X_train_transformed, scaler = scale_data(V, M, X_train)
-    unselected_scaled = scaler.transform(unselected_pool)
+    _, unselected_scaled = scale_data(V, M, unselected_pool)
 
     queried = []
     for i in range(n_queries):
         model = GaussianProcessRegressor(
             normalize_y=True,
-            kernel=RBF(length_scale=0.5, length_scale_bounds=(1e-1, 2)),
+            kernel=1.0 * DotProduct(sigma_0=1.0) ** 2,
         )
         model.fit(X_train_transformed, y_train)
         _, y_std = model.predict(unselected_scaled, return_std=True)
@@ -399,73 +384,17 @@ def api_cars(request: Request):
     return JSONResponse(content={"cars": cars})
 
 
-@app.post("/api/compute")
-def api_compute(request: Request, payload: Selection = Body(...)):
-    cars = create_cars()
-    selected_ids = payload.selected
-    if not selected_ids:
-        return JSONResponse(content={"error": "no selection"}, status_code=400)
-
-    X = np.array([[a["geschwindigkeit"], a["gewicht"]] for a in cars])
-    y = np.array([a["label"] for a in cars])
-
-    _validate_indices(selected_ids, len(cars))
-    selected_idx = [int(i) for i in selected_ids]
-    X_train = X[selected_idx]
-    y_train = y[selected_idx]
-
-    V, M, S = compute_test_data()
-    VM_transformed, X_train_transformed, scaler = scale_data(V, M, X_train)
-    y_pred, user_rmse = train_model_and_predict_grid(
-        X_train_transformed, y_train, VM_transformed, S
-    )
-    y_pred[y_pred < 0] = 0
-
-    # compute scores (use transformed selected points)
-    scores = compute_scores_for_cars(X_train_transformed, y_train, VM_transformed, S)
-
-    # compute gif urls for selected (resolve against request root_path)
-    gifs = []
-    for sid in selected_idx:
-        car = cars[sid]
-        velocity = car["geschwindigkeit"]
-        base = car["path"].split("/")[-1][:-4]
-        try:
-            gifs.append(
-                str(request.url_for("get_gif", gif_name=f"{base}_{velocity}.gif"))
-            )
-        except Exception:
-            gifs.append(f"/gifs/{base}_{velocity}.gif")
-
-    return JSONResponse(
-        content={
-            "V": V.tolist(),
-            "M": M.tolist(),
-            "y_pred": y_pred.tolist(),
-            "user_rmse": float(user_rmse),
-            "scores": scores,
-            "gifs": gifs,
-        }
-    )
-
-
 def _compute_worker(job_id: str, selected_idx: List[int]):
     try:
         cars = create_cars()
         X = np.array([[a["geschwindigkeit"], a["gewicht"]] for a in cars])
         y = np.array([a["label"] for a in cars])
 
-        X_train = X[selected_idx]
-        y_train = y[selected_idx]
-
         V, M, S = compute_test_data()
 
         # determine initial (first 5) and additional indices
         initial_idx = selected_idx[:5]
         additional_idx = selected_idx[5:]
-
-        # scale once (scaler fitted on grid)
-        VM_transformed, _, scaler = scale_data(V, M, X_train[:1])
 
         # prepare user-stepwise retraining: start with initial 5, then add each additional sequentially
         user_steps = []
@@ -474,11 +403,11 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
         y_init = y[initial_idx]
 
         # transform initial
-        X_init_trans = scaler.transform(X_init)
+        VM_init_trans, X_init_trans = scale_data(V, M, X_init)
 
         # step 0: initial model
         y_pred0, y_std0, rmse0 = train_model_with_uncertainty(
-            X_init_trans, y_init, VM_transformed, S
+            X_init_trans, y_init, VM_init_trans, S
         )
         y_pred0[y_pred0 < 0] = 0
         user_steps.append(
@@ -500,9 +429,9 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
             current_X = np.append(current_X, pt, axis=0)
             current_y = np.append(current_y, lab)
             # transform with same scaler
-            current_X_trans = scaler.transform(current_X)
+            current_VM_trans, current_X_trans = scale_data(V, M, current_X)
             y_pred_i, y_std_i, rmse_i = train_model_with_uncertainty(
-                current_X_trans, current_y, VM_transformed, S
+                current_X_trans, current_y, current_VM_trans, S
             )
             y_pred_i[y_pred_i < 0] = 0
             # collect step
@@ -516,14 +445,6 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
                     "train_ids": ids,
                 }
             )
-
-        # final model is last in user_steps
-        y_pred = np.array(user_steps[-1]["y_pred"])
-        user_rmse = float(user_steps[-1]["rmse"])
-
-        # compute scores using final transformed X
-        final_X_trans = scaler.transform(current_X)
-        scores = compute_scores_for_cars(final_X_trans, current_y, VM_transformed, S)
 
         gifs = []
         for sid in selected_idx:
@@ -556,7 +477,7 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
             y_al_current = y_init.copy()
             # step 0: initial al model
             y_al0, y_alstd0, rmse_al0 = train_model_with_uncertainty(
-                scaler.transform(X_al_current), y_al_current, VM_transformed, S
+                X_init_trans, y_al_current, VM_init_trans, S
             )
             y_al0[y_al0 < 0] = 0
             al_steps.append(
@@ -573,8 +494,13 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
                 lab = q["label"]
                 X_al_current = np.append(X_al_current, pt, axis=0)
                 y_al_current = np.append(y_al_current, lab)
+
+                current_VM_trans, current_X_al_trans = scale_data(V, M, X_al_current)
                 y_al_i, y_alstd_i, rmse_ali = train_model_with_uncertainty(
-                    scaler.transform(X_al_current), y_al_current, VM_transformed, S
+                    current_X_al_trans,
+                    y_al_current,
+                    current_VM_trans,
+                    S,
                 )
                 y_al_i[y_al_i < 0] = 0
                 al_ids = initial_idx + [int(qq["id"]) for qq in queried[: qi + 1]]
@@ -598,7 +524,6 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
                 "V": V.tolist(),
                 "M": M.tolist(),
                 "user_steps": user_steps,
-                "scores": scores,
                 "gifs": gifs,
                 "train_points": train_points,
                 "ground_truth": S.tolist(),
@@ -609,9 +534,6 @@ def _compute_worker(job_id: str, selected_idx: List[int]):
         logging.exception("Error in _compute_worker for job %s", job_id)
         with RESULTS_LOCK:
             RESULTS[job_id] = {"ready": True, "error": str(e), "_ts": time.time()}
-
-
-# RESULTS is defined earlier; no-op here
 
 
 @app.post("/api/compute_start")
@@ -628,7 +550,6 @@ def api_compute_start(request: Request, payload: Selection = Body(...)):
         RESULTS[job_id] = {"ready": False, "_ts": time.time()}
 
     # compute gifs quickly to return immediately (resolve against request root_path)
-    cars = create_cars()
     gifs = []
     for sid in selected_idx:
         car = cars[sid]
