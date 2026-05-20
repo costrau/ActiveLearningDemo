@@ -505,6 +505,10 @@ function renderLeaderboardForm(lastScore) {
       const h = document.createElement('h3'); h.textContent = 'Leaderboard'; el.appendChild(h);
       (data.leaderboard || []).forEach((r, i) => {
         const row = document.createElement('div');
+        // Print bold if name matches current player (case-insensitive)
+        if (r.Name.toLowerCase() === name.toLowerCase()) {
+          row.style.fontWeight = 'bold';
+        }
         row.textContent = `${i + 1}. ${r.Name} — ${Number(r.Score).toFixed(2)}`;
         el.appendChild(row);
       });
