@@ -409,6 +409,20 @@ function showResult(data) {
     xaxis: { title: { text: 'Geschwindigkeit (km/h)' } },
     yaxis: { title: { text: 'Gewicht (kg)' } },
   }, { responsive: true });
+
+  document.getElementById('userPrev').onclick = () => {
+    if (user_step_idx > 0) {
+      user_step_idx -= 1;
+      renderUserStep(user_step_idx);
+    }
+  };
+  document.getElementById('userNext').onclick = () => {
+    if (user_step_idx < user_steps.length - 1) {
+      user_step_idx += 1;
+      renderUserStep(user_step_idx);
+    }
+  };
+
   document.getElementById('groundError').textContent = '';
   continueToAL.style.display = '';
   continueToAL.onclick = () => {
@@ -450,18 +464,6 @@ function showActiveLearnerResult(data) {
   }
 
   // navigation handlers
-  document.getElementById('userPrev').onclick = () => {
-    if (user_step_idx > 0) {
-      user_step_idx -= 1;
-      renderUserStep(user_step_idx);
-    }
-  };
-  document.getElementById('userNext').onclick = () => {
-    if (user_step_idx < user_steps.length - 1) {
-      user_step_idx += 1;
-      renderUserStep(user_step_idx);
-    }
-  };
   document.getElementById('alPrev').onclick = () => { if (al_steps.length && al_step_idx > 0) { al_step_idx -= 1; renderAlStep(al_step_idx); renderUncertaintyStep(al_step_idx); } };
   document.getElementById('alNext').onclick = () => { if (al_steps.length && al_step_idx < al_steps.length - 1) { al_step_idx += 1; renderAlStep(al_step_idx); renderUncertaintyStep(al_step_idx); } };
 
