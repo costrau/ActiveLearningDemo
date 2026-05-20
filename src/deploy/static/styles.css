@@ -254,6 +254,22 @@
     align-items: center
 }
 
+/* GIF display: preserve aspect ratio and show caption */
+.gif-area img {
+    max-width: 100%;
+    height: auto;
+    max-height: 60vh;
+    object-fit: contain;
+    display: block;
+}
+
+.gif-caption {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.95em;
+    color: var(--muted);
+}
+
 .al-area {
     margin: 12px 0;
     display: flex;
@@ -282,6 +298,8 @@
     width: 100%;
     /* fluid width with sensible limits: min 320px, scale with viewport, cap at 700px */
     max-width: clamp(320px, 70vw, 700px);
+    /* prefer a minimum readable width on larger screens */
+    min-width: 430px;
     margin: 0 auto;
     position: relative;
 }
@@ -297,15 +315,18 @@
 .plots-grid {
     display: grid;
     /* prefer two columns on wider screens, but allow more if space allows */
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 12px;
     align-items: start;
 }
 
 @media (max-width: 900px) {
-    .plots-grid {
-        grid-template-columns: 1fr;
+    .plot-wrapper {
+        /*max-width: 96vw;
+        min-width: auto;*/
     }
+
+    grid-template-columns: 1fr;
 }
 
 @media (max-width: 600px) {

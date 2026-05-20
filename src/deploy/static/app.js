@@ -84,16 +84,53 @@ async function loadCars() {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 async function showGifs(gifUrls) {
   gifArea.innerHTML = '';
   for (const g of gifUrls) {
     const img = document.createElement('img');
     img.src = g;
+    img.alt = 'Experiment GIF';
+    // preserve aspect ratio and limit height; CSS handles object-fit
     img.style.maxWidth = '100%';
-    img.style.height = '200px';
-    gifArea.appendChild(img);
+    img.style.height = 'auto';
+    img.style.maxHeight = '60vh';
+    img.style.objectFit = 'contain';
+    // caption: try to derive car info from gif filename and cars[]
+    let captionHTML = '';
+    let gifName = '';
+    try {
+      gifName = g.split('/').pop();
+      const baseWithVel = gifName.replace(/\.gif$/i, '');
+      const idx = baseWithVel.lastIndexOf('_');
+      if (idx > 0) {
+        const base = baseWithVel.substring(0, idx);
+        const vel = baseWithVel.substring(idx + 1);
+        const match = cars.find(c => {
+          const p = (c.path || '').split('/').pop();
+          const b = p ? p.replace(/\.[^.]+$/, '') : '';
+          return b === base && String(c.geschwindigkeit) === String(vel);
+        });
+        if (match) captionHTML = `<b>${escapeHtml(match.name)}</b> — ${escapeHtml(match.geschwindigkeit)} km/h — ${escapeHtml(match.gewicht)} kg`;
+      }
+    } catch (e) { /* ignore parsing errors */ }
+    if (!captionHTML) captionHTML = escapeHtml(gifName || '');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.appendChild(img);
+    const cap = document.createElement('div');
+    cap.className = 'gif-caption';
+    cap.innerHTML = captionHTML;
+    wrapper.appendChild(cap);
+    gifArea.appendChild(wrapper);
     await sleep(2500);
-    gifArea.removeChild(img);
+    gifArea.removeChild(wrapper);
   }
 }
 
@@ -340,10 +377,15 @@ function showIntermediateResult(data) {
               renderCars();
               // show only the gif of the newly added car
               showOnlyView(gifView);
-              const gimg = document.createElement('img'); gimg.src = car2.gif; gimg.style.maxWidth = '100%'; gimg.style.height = '200px';
-              gifArea.appendChild(gimg);
+              // show gif with caption preserving aspect ratio
+              const wrapper = document.createElement('div');
+              wrapper.style.display = 'flex'; wrapper.style.flexDirection = 'column'; wrapper.style.alignItems = 'center';
+              const gimg = document.createElement('img'); gimg.src = car2.gif; gimg.alt = car2.name + ' GIF'; gimg.style.maxWidth = '100%'; gimg.style.height = 'auto'; gimg.style.maxHeight = '60vh'; gimg.style.objectFit = 'contain';
+              const cap = document.createElement('div'); cap.className = 'gif-caption'; cap.innerHTML = `<b>${escapeHtml(car2.name)}</b> — ${escapeHtml(car2.geschwindigkeit)} km/h — ${escapeHtml(car2.gewicht)} kg`;
+              wrapper.appendChild(gimg); wrapper.appendChild(cap);
+              gifArea.appendChild(wrapper);
               await sleep(2500);
-              gifArea.removeChild(gimg);
+              gifArea.removeChild(wrapper);
               // after showing gif, request new computation and update intermediate view
               await runExperiments({ intermediateOnly: true });
             }
@@ -500,7 +542,7 @@ function renderLeaderboardForm(lastScore) {
   const wrapper = document.createElement('div');
   const input = document.createElement('input');
   input.id = 'playerName'; input.className = 'form-control'; input.placeholder = 'Dein Name'; input.setAttribute('aria-label', 'Dein Name');
-  const submit = document.createElement('button'); submit.type = 'button'; submit.id = 'submitScore'; submit.className = 'grn-btn'; submit.textContent = 'In Leaderboard eintragen';
+  const submit = document.createElement('button'); submit.type = 'button'; submit.id = 'submitScore'; submit.className = 'grn-btn'; submit.textContent = 'In Leaderboard eintragen'; submit.style.marginLeft = '8px';
   wrapper.appendChild(input); wrapper.appendChild(submit);
   leaderboardArea.appendChild(wrapper);
   submit.onclick = async () => {
