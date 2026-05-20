@@ -276,3 +276,40 @@
     width: 200px;
     height: 2em;
 }
+
+/* Plot sizing helpers */
+.plot-wrapper {
+    width: 100%;
+    /* fluid width with sensible limits: min 320px, scale with viewport, cap at 700px */
+    max-width: clamp(320px, 70vw, 700px);
+    margin: 0 auto;
+    position: relative;
+}
+
+.plot {
+    width: 100%;
+    /* keep rectangular shape via aspect-ratio when supported */
+    aspect-ratio: 16 / 9;
+    /* fallback min-height for older browsers */
+    min-height: 180px;
+}
+
+.plots-grid {
+    display: grid;
+    /* prefer two columns on wider screens, but allow more if space allows */
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 12px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .plots-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .plot-wrapper {
+        max-width: 96vw;
+    }
+}

@@ -120,6 +120,15 @@ function showOnlyView(view) {
   } else {
     carsEl.style.display = 'none';
   }
+  // After showing a view, schedule Plotly resize for any plots inside it
+  if (view) {
+    window.requestAnimationFrame(() => {
+      try {
+        const plots = view.querySelectorAll('.plot');
+        plots.forEach(p => { try { Plotly.Plots.resize(p); } catch (e) { /* ignore */ } });
+      } catch (e) { /* ignore if view has no querySelectorAll */ }
+    });
+  }
 }
 
 async function runExperiments({ intermediateOnly = false } = {}) {
@@ -521,3 +530,21 @@ function renderLeaderboardForm(lastScore) {
 }
 
 loadCars();
+
+// Initialize ResizeObserver to keep Plotly plots in sync with wrapper size
+function initPlotResizeObserver() {
+  if (typeof ResizeObserver === 'undefined') return;
+  const ro = new ResizeObserver(entries => {
+    for (const entry of entries) {
+      const wrapper = entry.target;
+      const gd = wrapper.querySelector && wrapper.querySelector('.plot');
+      if (gd) {
+        try { Plotly.Plots.resize(gd); } catch (e) { /* ignore */ }
+      }
+    }
+  });
+  document.querySelectorAll('.plot-wrapper').forEach(w => ro.observe(w));
+}
+
+// start observing plot wrappers
+initPlotResizeObserver();

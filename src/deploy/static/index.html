@@ -48,7 +48,9 @@
           roten Kreuzen sind die gemessenen Punkte markiert. Schaue, wo du meinst, dass das Modell schlecht vorhersagt
           und Klicke in den Graphen. Unten wird dir dann entsprechend ein Vorschlag für das nächste Auto gegeben. Das
           kannst du genau zwei mal machen. Versuche den Fehlerscore zu minimieren.</p>
-        <div id="plotIntermediateUser" style="width:100%;height:50vh;min-height:220px;"></div>
+        <div class="plot-wrapper">
+          <div id="plotIntermediateUser" class="plot"></div>
+        </div>
         <br>
         <span id="intermediateUserStepInfo"></span>
         <span id="intermediateSelectInfo"></span>
@@ -61,17 +63,21 @@
 
     <div id="resultView" style="display:none">
       <p> Im folgenden Abschnitt kannst du dein Ergebnis mit den echten Bremswegen vergleichen.</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:260px">
+      <div class="plots-grid">
+        <div>
           <h3>Trainiertes Modell</h3>
-          <div id="plotUser" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div class="plot-wrapper">
+            <div id="plotUser" class="plot"></div>
+          </div>
           <div id="userControls"><button type="button" id="userPrev" class="nv-btn">◀</button> <button type="button"
               id="userNext" class="nv-btn">▶</button> <span id="userStepInfo"></span></div>
           <div id="userError"></div>
         </div>
-        <div style="flex:1;min-width:260px">
+        <div>
           <h3>Tatsächliches Ergebnis</h3>
-          <div id="plotGround" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div class="plot-wrapper">
+            <div id="plotGround" class="plot"></div>
+          </div>
           <div id="groundError"></div>
         </div>
       </div>
@@ -82,18 +88,22 @@
     <div id="activeLearnerResult" style="display:none">
       <p>Der aktive Lerner hat ebenfalls versucht, die Bremswege vorherzusagen. Er hatte ebenfalls die Wahl für 2
         zusätzliche Autos. Wie gut hat er sich geschlagen?</p>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:260px">
+      <div class="plots-grid">
+        <div>
           <h3>Aktiver Lerner</h3>
-          <div id="plotAL" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div class="plot-wrapper">
+            <div id="plotAL" class="plot"></div>
+          </div>
           <div id="alControls"><button id="alPrev" class="nv-btn">◀</button> <button id="alNext"
               class="nv-btn">▶</button> <span id="alStepInfo"></span>
           </div>
           <div id="alError"></div>
         </div>
-        <div style="flex:1;min-width:260px">
+        <div>
           <h3>Modell-Unsicherheit</h3>
-          <div id="plotUncertainty" style="width:100%;height:28vh;min-height:180px;"></div>
+          <div class="plot-wrapper">
+            <div id="plotUncertainty" class="plot"></div>
+          </div>
         </div>
       </div>
       <p> Der Aktive Lerner entscheidet anhand der Modell-Unsicherheit. Diese ist rechts dargestellt.</p>
