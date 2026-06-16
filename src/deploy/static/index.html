@@ -118,10 +118,34 @@
       <a href="https://ki-akademieowl.de/impressum/">Impressum</a>
       <a href="https://ki-akademieowl.de/informationen-zum-datenschutz/">Datenschutz</a>
       <a href="https://ki-akademieowl.de/cookie-policy-eu/">Cookie-Richtlinie</a>
+      <a href="#" id="bildnachweiseToggle">Bildnachweise</a>
     </nav>
     <div class="footer-copy muted">Copyright © 2026 KI-Akademie OWL | Alle Rechte vorbehalten</div>
     <img class="footer-funding" src="images/gefoerdert_durch.png"
       alt="Gefördert durch: Bundesministerium für Forschung, Technologie und Raumfahrt" />
+    <div id="bildnachweise" style="display:none">
+      <p> Bildnachweise:<br>
+        <a href="https://www.flaticon.com/de/kostenlose-icons/lkw" title="lkw Icons">LKW Icon erstellt von mavadee -
+          Flaticon</a><br>
+        <a href="https://www.flaticon.com/de/kostenlose-icons/sportwagen" title="sportwagen Icons">Sportwagen Icon
+          erstellt
+          von
+          Hilmaaaan - Flaticon</a><br>
+        <a href="https://www.flaticon.com/de/kostenlose-icons/auto" title="autos Icons">Auto Icon erstellt von
+          sonnycandra
+          -
+          Flaticon</a><br>
+        <a href="https://www.flaticon.com/de/kostenlose-icons/kleinbus" title="kleinbus Icons">Kleinbus Icon erstellt
+          von
+          Vitaly
+          Gorbachev - Flaticon</a>
+        <br>
+        <a href="https://www.flaticon.com/de/kostenlose-icons/pickup" title="auto Icons">Pickup Icon erstellt von
+          Mehwish
+          -
+          Flaticon</a>
+      </p>
+    </div>
   </footer>
   <script>
     // Runtime backend host configuration.
@@ -131,6 +155,21 @@
     if (window.__BACKEND_HOST__ === undefined) {
       window.__BACKEND_HOST__ = '';
     }
+  </script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', function () {
+      var toggle = document.getElementById('bildnachweiseToggle');
+      var panel = document.getElementById('bildnachweise');
+      if (!toggle || !panel) return;
+      toggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (panel.style.display === 'none' || panel.style.display === '') {
+          panel.style.display = 'block';
+        } else {
+          panel.style.display = 'none';
+        }
+      });
+    });
   </script>
   <script src="app.js" defer></script>
 </body>
