@@ -14,6 +14,10 @@ const statusEl = document.getElementById('status');
 const gifArea = document.getElementById('gifArea');
 const alArea = document.getElementById('alArea');
 const leaderboardArea = document.getElementById('leaderboardArea');
+// Enable leaderboard if URL contains ?leaderboard=on (accepts 'on', '1', 'true')
+let lastLeaderboardScore = null;
+const _lbq = (new URLSearchParams(window.location.search).get('leaderboard') || '').toLowerCase();
+let leaderboardEnabled = ['on', '1', 'true'].includes(_lbq);
 const gifView = document.getElementById('gifView');
 const resultView = document.getElementById('resultView');
 const intermediateResult = document.getElementById('intermediateResult');
@@ -538,7 +542,21 @@ runBtn.onclick = () => { retrainCount = 0; runExperiments({ intermediateOnly: tr
 
 
 function renderLeaderboardForm(lastScore) {
+  // remember the last score so toggle can re-render later
+  lastLeaderboardScore = lastScore;
+  if (!leaderboardEnabled) {
+    leaderboardArea.innerHTML = '';
+    leaderboardArea.style.display = 'none';
+    return;
+  }
+  leaderboardArea.style.display = '';
   leaderboardArea.innerHTML = '';
+  const h2 = document.createElement('h2');
+  h2.textContent = 'Leaderboard';
+  leaderboardArea.appendChild(h2);
+  const p = document.createElement('p');
+  p.textContent = 'Wenn du möchtest, kannst du dich hier auf der Leaderboard-Seite eintragen. Trage dazu deinen Namen ein:';
+  leaderboardArea.appendChild(p);
   const wrapper = document.createElement('div');
   const input = document.createElement('input');
   input.id = 'playerName'; input.className = 'form-control'; input.placeholder = 'Dein Name'; input.setAttribute('aria-label', 'Dein Name');
@@ -590,3 +608,10 @@ function initPlotResizeObserver() {
 
 // start observing plot wrappers
 initPlotResizeObserver();
+
+// Apply leaderboard setting from URL param at startup
+if (leaderboardEnabled) {
+  leaderboardArea.style.display = '';
+} else {
+  leaderboardArea.style.display = 'none';
+}
