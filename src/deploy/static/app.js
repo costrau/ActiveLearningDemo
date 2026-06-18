@@ -2,7 +2,15 @@
 // When deploying, the hosting page can set `window.__BACKEND_HOST__` to override this.
 // Default is localhost for local development.
 // Default to same-origin (relative paths). Hosts can override via `window.__BACKEND_HOST__`.
-let BACKEND_HOST = (window.__BACKEND_HOST__ !== undefined) ? window.__BACKEND_HOST__ : '';
+const BACKEND_HOST = window.__BACKEND_HOST__
+  ? new URL(window.__BACKEND_HOST__).origin
+  : window.location.origin;
+
+// Check if website uses subpath (e.g. example.com/app/) for image URLs
+// Only add trailing slash if pathname is not empty and not just "/"
+const SUBPATH = window.location.pathname && window.location.pathname !== "/"
+  ? window.location.pathname.replace(/\/?$/, '/')
+  : '';
 
 const SELECT_REQUIRED = 5;
 const MAX_SELECTION = 5;
@@ -48,7 +56,7 @@ function renderCars() {
     weight.textContent = `${c.gewicht} kg`;
 
     const img = document.createElement('img');
-    img.src = c.icon_url || '';
+    img.src = SUBPATH + c.icon_url;
     img.style.width = '60px';
     img.alt = c.name + ' icon';
 
@@ -96,7 +104,7 @@ async function showGifs(gifUrls) {
   gifArea.innerHTML = '';
   for (const g of gifUrls) {
     const img = document.createElement('img');
-    img.src = g;
+    img.src = SUBPATH + g;
     img.alt = 'Experiment GIF';
     // preserve aspect ratio and limit height; CSS handles object-fit
     img.style.maxWidth = '100%';
@@ -305,7 +313,7 @@ function showIntermediateResult(data) {
       card.style.width = '110px';
       const name = document.createElement('div'); name.innerHTML = '<b></b>'; name.firstChild.textContent = car.name;
       const w = document.createElement('div'); w.textContent = `${car.gewicht} kg`;
-      const img = document.createElement('img'); img.src = car.icon_url; img.style.width = '60px'; img.alt = car.name + ' icon';
+      const img = document.createElement('img'); img.src = SUBPATH + car.icon_url; img.style.width = '60px'; img.alt = car.name + ' icon';
       const sp = document.createElement('div'); sp.innerHTML = '<b></b>'; sp.firstChild.textContent = `${car.geschwindigkeit} km/h`;
       card.appendChild(name); card.appendChild(w); card.appendChild(img); card.appendChild(sp);
       wrap.appendChild(card);
@@ -365,7 +373,7 @@ function showIntermediateResult(data) {
           const card = document.createElement('div'); card.className = 'card'; card.style.width = '110px';
           const name = document.createElement('div'); name.innerHTML = '<b></b>'; name.firstChild.textContent = car.name;
           const w = document.createElement('div'); w.textContent = `${car.gewicht} kg`;
-          const img = document.createElement('img'); img.src = car.icon_url; img.style.width = '60px'; img.alt = car.name + ' icon';
+          const img = document.createElement('img'); img.src = SUBPATH + car.icon_url; img.style.width = '60px'; img.alt = car.name + ' icon';
           const sp = document.createElement('div'); sp.innerHTML = '<b></b>'; sp.firstChild.textContent = `${car.geschwindigkeit} km/h`;
           const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'acceptIntermediateCarBtn chs-btn'; btn.textContent = 'Wähle dieses Auto';
           btn.dataset.carIdx = idx;
@@ -384,7 +392,7 @@ function showIntermediateResult(data) {
               // show gif with caption preserving aspect ratio
               const wrapper = document.createElement('div');
               wrapper.style.display = 'flex'; wrapper.style.flexDirection = 'column'; wrapper.style.alignItems = 'center';
-              const gimg = document.createElement('img'); gimg.src = car2.gif; gimg.alt = car2.name + ' GIF'; gimg.style.maxWidth = '100%'; gimg.style.height = 'auto'; gimg.style.maxHeight = '60vh'; gimg.style.objectFit = 'contain';
+              const gimg = document.createElement('img'); gimg.src = SUBPATH + car2.gif; gimg.alt = car2.name + ' GIF'; gimg.style.maxWidth = '100%'; gimg.style.height = 'auto'; gimg.style.maxHeight = '60vh'; gimg.style.objectFit = 'contain';
               const cap = document.createElement('div'); cap.className = 'gif-caption'; cap.innerHTML = `<b>${escapeHtml(car2.name)}</b> — ${escapeHtml(car2.geschwindigkeit)} km/h — ${escapeHtml(car2.gewicht)} kg`;
               wrapper.appendChild(gimg); wrapper.appendChild(cap);
               gifArea.appendChild(wrapper);
