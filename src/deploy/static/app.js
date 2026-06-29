@@ -8,8 +8,11 @@ const BACKEND_HOST = window.__BACKEND_HOST__
 
 // Check if website uses subpath (e.g. example.com/app/) for image URLs
 // Only add trailing slash if pathname is not empty and not just "/"
+// Handle URLs ending with index.html by preserving the filename
 const SUBPATH = window.location.pathname && window.location.pathname !== "/"
-  ? window.location.pathname.replace(/\/?$/, '/')
+  ? (window.location.pathname.endsWith('index.html')
+    ? window.location.pathname.replace(/index\.html$/, '')
+    : window.location.pathname.replace(/\/?$/, '/'))
   : '';
 
 const SELECT_REQUIRED = 5;
